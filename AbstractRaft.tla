@@ -1,6 +1,6 @@
 ---- MODULE AbstractRaft ----
 \*
-\* High level specification of Raft protocol without dynamic reconfiguration.
+\* Towards a logless variant of the Raft consensus algorithm.
 \*
 
 EXTENDS Naturals, Integers, FiniteSets, Sequences, TLC
@@ -45,17 +45,6 @@ IsPrefix(s, t) ==
   (* a suffix u that with s prepended equals t.                             *)
   (**************************************************************************)
   Len(s) <= Len(t) /\ SubSeq(s, 1, Len(s)) = SubSeq(t, 1, Len(s))
-
-\* Is it possible for log 'i' to roll back against log 'j'. 
-\* If this is true, it implies that log 'i' should remove entries from the end of its log.
-CanRollback(i, j) ==
-    /\ Len(log[i]) > 0
-    /\ \* The log with later term is more up-to-date.
-       LastTerm(log[i]) < LastTerm(log[j])
-    /\ \/ Len(log[i]) > Len(log[j])
-       \* There seems no short-cut of OR clauses, so we specify the negative case.
-       \/ /\ Len(log[i]) <= Len(log[j])
-          /\ LastTerm(log[i]) /= LogTerm(j, Len(log[i]))
 
 \* Can node 'i' currently cast a vote for node 'j' in term 'term'.
 CanVoteForOplog(i, j, term) ==
@@ -119,14 +108,6 @@ MergeEntries(i, j) ==
     /\ log' = [log EXCEPT ![i] = log[j]]
     /\ UNCHANGED <<committed, currentTerm, state>>
 
-\*  Node 'i' rolls back against the log of node 'j'.  
-RollbackEntries(i, j) ==
-    /\ state[i] = Secondary
-    /\ CanRollback(i, j)
-    \* Roll back one log entry.
-    /\ log' = [log EXCEPT ![i] = SubSeq(log[i], 1, Len(log[i])-1)]
-    /\ UNCHANGED <<committed, currentTerm, state>>
-
 \* Node 'i' gets elected as a primary.
 BecomeLeader(i, voteQuorum) == 
     \* Primaries make decisions based on their current configuration.
@@ -175,7 +156,6 @@ Init ==
 Next == 
     \/ \E i \in Server : ClientRequest(i)
     \/ \E i, j \in Server : MergeEntries(i, j)
-    \* \/ \E i, j \in Server : RollbackEntries(i, j)
     \/ \E i \in Server : \E Q \in Quorums(Server) : BecomeLeader(i, Q)
     \/ \E i \in Server :  \E Q \in Quorums(Server) : CommitEntry(i, Q)
     \/ \E i, j \in Server : UpdateTerms(i, j)
