@@ -243,8 +243,9 @@ DiGraph(V, E, nodeAttrsFn, edgeAttrsFn) == SVGElem("digraph", [V |-> V, E |-> E,
 
 \* Graphviz attributes
 nodeAttrsFn(n) == [
-    label |-> ToString(n),
-    style |-> "filled"
+    label |-> "(" \o n \o ")",
+    style |-> "filled",
+    shape |-> "rect"
     \* fillcolor |-> IF n \in CommittedTxns(txnHistory) THEN "lightgreen" ELSE "lightgray"
 ]
 
