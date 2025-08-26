@@ -215,4 +215,50 @@ StateConstraint ==
     /\ \A i \in Server : currentTerm[i] <= MaxTerm
     /\ \A i \in Server : Len(log[i]) <= MaxLogLen
 
+\* SomeLogs == (\E s \in Server : Len(log[s]) < 6)
+\* SomeLogs == TLCGet("level") < 40
+
+
+
+
+
+------------------------------------
+\* 
+\* Visualizations.
+\* 
+
+
+SVGElem(_name, _attrs, _children, _innerText) == [name |-> _name, attrs |-> _attrs, children |-> _children, innerText |-> _innerText ]
+
+\* Group element. 'children' is as a sequence of elements that will be contained in this group.
+Group(children, attrs) == SVGElem("g", attrs, children, "")
+
+\* Edges can also be specified as tuples of length > 2, such as <<n1,n2,x,y,z>>,
+\* which defines an edge between n1 -> n2, but x,y,z define additional metadata
+\* specific to that edge e.g. this also allows for multiple edges between the
+\* same nodes in the same direction, but with potentially different edge
+\* "types".
+DiGraph(V, E, nodeAttrsFn, edgeAttrsFn) == SVGElem("digraph", [V |-> V, E |-> E, nodeAttrsFn |-> nodeAttrsFn, edgeAttrsFn |-> edgeAttrsFn], <<>>, "")
+
+
+\* Graphviz attributes
+nodeAttrsFn(n) == [
+    label |-> ToString(n),
+    style |-> "filled"
+    \* fillcolor |-> IF n \in CommittedTxns(txnHistory) THEN "lightgreen" ELSE "lightgray"
+]
+
+edgeAttrsFn(e) == [
+    label |-> "",
+    color |-> "black"
+    \* fontsize |-> "8"
+]
+
+LogTreeNodeStr(n) == ToString(n[1]) \o "_" \o ToString(n[2])
+LogTreeNodesStr == {LogTreeNodeStr(n) : n \in LogTreeNodes}
+LogTreeEdgesStr == {<<LogTreeNodeStr(e[1]), LogTreeNodeStr(e[2])>> : e \in LogTreeEdges}
+
+AnimView == Group(<<DiGraph(LogTreeNodesStr,LogTreeEdgesStr,[n \in LogTreeNodesStr |-> nodeAttrsFn(n)], [e \in LogTreeEdgesStr |-> edgeAttrsFn(e)])>>, [transform |-> "translate(40, 40) scale(1.25)"])
+
+
 =============================================================================
