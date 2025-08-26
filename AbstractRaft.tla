@@ -100,7 +100,8 @@ ClientRequest(i) ==
 MergeEntries(i, j) ==
     /\ state[i] = Secondary
     /\ \* Log append/merge.
-       \/ IsPrefix(log[i], log[j])
+       \/ /\ IsPrefix(log[i], log[j]) 
+          /\ Len(log[i]) < Len(log[j])
        \* Log divergence cleanup (rollback).
        \/ /\ ~IsPrefix(log[i], log[j])
           /\ LastTerm(log[j]) > LastTerm(log[i])
