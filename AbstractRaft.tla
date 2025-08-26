@@ -97,14 +97,25 @@ ClientRequest(i) ==
 \* Node 'i' gets a new log from node 'j'.
 \* This single action compacts all of the incremental log append and rollback machinery into
 \* a single, atomic action.
+\* MergeEntries(i, j) ==
+\*     /\ state[i] = Secondary
+\*     /\ \* Log append/merge.
+\*        \/ /\ IsPrefix(log[i], log[j]) 
+\*           /\ Len(log[i]) < Len(log[j])
+\*        \* Log divergence cleanup (rollback).
+\*        \/ /\ ~IsPrefix(log[i], log[j])
+\*           /\ LastTerm(log[j]) > LastTerm(log[i])
+\*     /\ log' = [log EXCEPT ![i] = log[j]]
+\*     /\ UNCHANGED <<committed, currentTerm, state>>
+
+
 MergeEntries(i, j) ==
     /\ state[i] = Secondary
     /\ \* Log append/merge.
-       \/ /\ IsPrefix(log[i], log[j]) 
+       \/ /\ LastTerm(log[j]) = LastTerm(log[i]) 
           /\ Len(log[i]) < Len(log[j])
        \* Log divergence cleanup (rollback).
-       \/ /\ ~IsPrefix(log[i], log[j])
-          /\ LastTerm(log[j]) > LastTerm(log[i])
+       \/ LastTerm(log[j]) > LastTerm(log[i])
     /\ log' = [log EXCEPT ![i] = log[j]]
     /\ UNCHANGED <<committed, currentTerm, state>>
 
