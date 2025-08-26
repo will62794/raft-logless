@@ -195,6 +195,11 @@ LeaderCompleteness ==
 StateMachineSafety == 
     \A c1, c2 \in committed : (c1[1] = c2[1]) => (c1 = c2)
 
+LogEdges(s) == {<< <<i, log[s][i]>>, <<i+1, log[s][i+1]>> >> : i \in (DOMAIN log[s] \ {Len(log[s])})}
+LogTreeEdges == UNION {LogEdges(s) : s \in Server}
+LogNodes(s) == {<<i, log[s][i]>> : i \in DOMAIN log[s]}
+LogTreeNodes == UNION {LogNodes(s) : s \in Server}
+
 
 ------------------------------------
 
