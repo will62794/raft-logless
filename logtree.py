@@ -21,6 +21,33 @@ def parse_logs(trace_file):
     for state in trace["state"]:
         states.append(state[1]) # Each action has state at index 0,1
 
+    actions = []
+    for action in trace["action"]:
+        name = action[1]["name"]
+        context = action[1]["context"]
+        parameters = action[1]["parameters"]
+        actions.append((name, context, parameters))
+    print(actions)
+
+    html_out = "<table>"
+
+    html_div_template = """
+<div style="text-align: center;margin-bottom:20px">
+<img src="/assets/logless-raft/imgs/log_tree_{n}.png" alt="Logless Raft Diagram" height="{height}">
+State {n} - {action_str}
+</div>
+"""
+
+    html_div_template = """
+<tr>
+<td style="text-align: left; font-size: 12px; padding-right: 20px">State {n} - {action_str}</td>
+<td style="text-align: left">
+<img src="/assets/logless-raft/imgs/log_tree_{n}.png" alt="Logless Raft Diagram" height="{height}">
+</td>
+</tr>
+"""
+
+
     # Extract logs for each node from each state
     node_logs = {}
     n = 0
@@ -28,6 +55,11 @@ def parse_logs(trace_file):
         tree_edges = []
         tree_nodes = []
         print("State:", n)
+        # print("Action:", actions[n-1])
+        action_args = [str(actions[n-1][1][arg]) for arg in actions[n-1][2]]
+        print(action_args)
+        action_str = f"{actions[n-1][0]}({', '.join(action_args)})"
+        print("Action:", action_str)
         for node, log in state["log"].items():
             print(node, log)
             if node not in node_logs:
@@ -83,7 +115,16 @@ def parse_logs(trace_file):
         # Render graph to PNG
         if len(tree_nodes) > 0:
             dot.render(f"imgs/log_tree_{n}", format="png", cleanup=True)
+            png_file = f"imgs/log_tree_{n}.png"
+            img = Image.open(png_file)
+            width, height = img.size
+            html_out += html_div_template.format(n=n, action_str=action_str, height=height*0.2)
         n += 1
+    html_out += "</table>"
+
+    # Save the HTML output to a file
+    with open('log_tree.html', 'w') as f:
+        f.write(html_out)
 
     # Combine all PNGs into a filmstrip
     import glob
