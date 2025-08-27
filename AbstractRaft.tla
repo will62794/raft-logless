@@ -216,7 +216,11 @@ StateConstraint ==
     /\ \A i \in Server : Len(log[i]) <= MaxLogLen
 
 \* SomeLogs == (\E s \in Server : Len(log[s]) < 6)
-\* SomeLogs == TLCGet("level") < 40
+Forks == {n \in LogTreeNodes : \E a,b \in LogTreeEdges : a[1] = n /\ b[1] = n /\ a[2] # b[2]}
+SomeLogs == ~(
+    /\ Cardinality(Forks) >= 2
+    /\ Cardinality(committed) = 2
+)
 
 
 

@@ -46,10 +46,26 @@ def parse_logs(trace_file):
         dot.attr('node', fontname='Helvetica')
         dot.attr('edge', fontname='Helvetica')
         dot.attr(dpi='300') # Increase resolution
+
+        def last_log_entry(n):
+            return (len(state["log"][n]), state["log"][n][-1])
         
         for node in tree_nodes:
             src = f"({node[0]},{node[1]})"
-            dot.node(src, shape='box')
+            is_committed = (list(node) + [node[1]]) in state["committed"]
+            # print((list(node) + [node[1]]), state["committed"], is_committed)
+            nodeatset = [n for n in state["log"].keys() if len(state["log"][n]) > 0 and last_log_entry(n) == node]
+            nodeat_xlabel = ",".join([n for n in nodeatset])
+            if len(nodeatset) > 0:
+               nodeat_xlabel = "{" + nodeat_xlabel + "}"
+            node_attrs = {
+                'shape': 'box',
+                'style': 'filled',
+                'fillcolor': 'lightgreen' if is_committed else 'white',
+                'xlabel': nodeat_xlabel,
+                'fontsize': '10',  # Add smaller font size for xlabel
+            }
+            dot.node(src, **node_attrs)
 
         # Add edges to graph
         for edge in tree_edges:
@@ -63,7 +79,7 @@ def parse_logs(trace_file):
             dot.edge(src, dst)
 
         # Render graph to PNG
-        if len(tree_edges) > 0:
+        if len(tree_nodes) > 0:
             dot.render(f"imgs/log_tree_{n}", format="png", cleanup=True)
         n += 1
     return node_logs
