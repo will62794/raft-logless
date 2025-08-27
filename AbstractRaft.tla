@@ -217,11 +217,17 @@ StateConstraint ==
 
 \* SomeLogs == (\E s \in Server : Len(log[s]) < 6)
 Forks == {n \in LogTreeNodes : \E a,b \in LogTreeEdges : a[1] = n /\ b[1] = n /\ a[2] # b[2]}
-SomeLogs == ~(
+SomeLogs == 
     /\ Cardinality(Forks) >= 2
     /\ Cardinality(committed) = 2
-)
+    /\ Cardinality(LogTreeNodes) = 7
 
+
+A1 == 
+    ~(/\ SomeLogs
+      /\ Cardinality(LogTreeNodes') < Cardinality(LogTreeNodes))
+
+A1Prop == [][A1]_vars
 
 
 

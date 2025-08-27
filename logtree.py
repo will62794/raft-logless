@@ -29,7 +29,7 @@ def parse_logs(trace_file):
         actions.append((name, context, parameters))
     print(actions)
 
-    html_out = "<table>"
+    html_out = '<table style="margin: 0 auto;">'
 
     html_div_template = """
 <div style="text-align: center;margin-bottom:20px">
@@ -40,8 +40,8 @@ State {n} - {action_str}
 
     html_div_template = """
 <tr>
-<td style="text-align: left; font-size: 12px; padding-right: 20px">State {n} - {action_str}</td>
-<td style="text-align: left">
+<td style="text-align: left; font-size: 12px;padding: 15px"><b>State {staten}</b>: {action_str}</td>
+<td style="text-align: left;padding: 18px">
 <img src="/assets/logless-raft/imgs/log_tree_{n}.png" alt="Logless Raft Diagram" height="{height}">
 </td>
 </tr>
@@ -51,6 +51,7 @@ State {n} - {action_str}
     # Extract logs for each node from each state
     node_logs = {}
     n = 0
+    html_out_state_n = 0
     for state in states:
         tree_edges = []
         tree_nodes = []
@@ -60,6 +61,11 @@ State {n} - {action_str}
         print(action_args)
         action_str = f"{actions[n-1][0]}({', '.join(action_args)})"
         print("Action:", action_str)
+        
+        # Add special root node
+        root_node = (0, "root")
+        tree_nodes.append(root_node)
+        
         for node, log in state["log"].items():
             print(node, log)
             if node not in node_logs:
@@ -72,6 +78,12 @@ State {n} - {action_str}
                 tree_edges.append(edge)
             for i in range(len(log)):
                 tree_nodes.append((i+1, log[i]))
+                
+                # Add edge from root to index 1 entries
+                if i == 0:
+                    root_edge = (root_node, (1, log[0]))
+                    tree_edges.append(root_edge)
+                    
         print(tree_edges)
         # Create graphviz graph from edges
         dot = graphviz.Digraph(strict=True)
@@ -89,14 +101,22 @@ State {n} - {action_str}
             is_committed = (list(node) + [node[1]]) in state["committed"]
             # print((list(node) + [node[1]]), state["committed"], is_committed)
             nodeatset = [n for n in state["log"].keys() if len(state["log"][n]) > 0 and last_log_entry(n) == node]
+            if node[0] == 0:
+                nodeatset = [n for n in state["log"].keys() if len(state["log"][n]) == 0]
             nodeat_xlabel = ",".join([n for n in nodeatset])
             if len(nodeatset) > 0:
                nodeat_xlabel = "{" + nodeat_xlabel + "}"
+            label = src
+            fillcolor = 'lightgreen' if is_committed else 'white'
+            if node[0] == 0:
+                fillcolor = 'lightgray'
+                label = "[]"
             node_attrs = {
                 'shape': 'box',
-                'style': 'filled',
-                'fillcolor': 'lightgreen' if is_committed else 'white',
-                'xlabel': nodeat_xlabel,
+                'style': 'filled,rounded',  # Added rounded style
+                'label': label,
+                'fillcolor': fillcolor,
+                'xlabel': nodeat_xlabel, # HTML-like label format for Graphviz
                 'fontsize': '13'  # Add smaller font size for xlabel,
             }
             dot.node(src, **node_attrs)
@@ -113,12 +133,15 @@ State {n} - {action_str}
             dot.edge(src, dst)
 
         # Render graph to PNG
-        if len(tree_nodes) > 0:
+        if len(tree_nodes) >= 0:
             dot.render(f"imgs/log_tree_{n}", format="png", cleanup=True)
             png_file = f"imgs/log_tree_{n}.png"
             img = Image.open(png_file)
             width, height = img.size
-            html_out += html_div_template.format(n=n, action_str=action_str, height=height*0.2)
+            if n == 0:
+                action_str = "Initial State"
+            html_out += html_div_template.format(staten=html_out_state_n, n=n, action_str=action_str, height=height*0.18)
+            html_out_state_n += 1
         n += 1
     html_out += "</table>"
 
