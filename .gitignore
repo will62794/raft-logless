@@ -30,3 +30,5 @@ tla2tools.jar
 *.nav
 *.snm
 *.toc
+imgs/
+trace.json
