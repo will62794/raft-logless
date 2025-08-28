@@ -32,3 +32,4 @@ tla2tools.jar
 *.toc
 imgs/
 trace.json
+log_tree.html
