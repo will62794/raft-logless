@@ -29,7 +29,7 @@ def parse_logs(trace_file):
         actions.append((name, context, parameters))
     print(actions)
 
-    html_out = '<table style="margin: 0 auto;">'
+    html_out = '<table style="margin: 0 auto;min-width: 780px;">'
 
     html_div_template = """
 <div style="text-align: center;margin-bottom:20px">
@@ -106,6 +106,8 @@ State {n} - {action_str}
             nodeat_xlabel = ",".join([n for n in nodeatset])
             if len(nodeatset) > 0:
                nodeat_xlabel = "{" + nodeat_xlabel + "}"
+            if nodeat_xlabel == "":
+                nodeat_xlabel = " "
             label = src
             fillcolor = 'lightgreen' if is_committed else 'white'
             if node[0] == 0:
@@ -114,9 +116,9 @@ State {n} - {action_str}
             node_attrs = {
                 'shape': 'box',
                 'style': 'filled,rounded',  # Added rounded style
-                'label': label,
+                'label': '<<TABLE CELLPADDING="2" BORDER="0"><TR><TD>' + label + '</TD></TR><TR><TD><FONT POINT-SIZE="10">' + nodeat_xlabel + '</FONT></TD></TR></TABLE>>',
                 'fillcolor': fillcolor,
-                'xlabel': nodeat_xlabel, # HTML-like label format for Graphviz
+                # 'xlabel': nodeat_xlabel, # HTML-like label format for Graphviz
                 'fontsize': '13'  # Add smaller font size for xlabel,
             }
             dot.node(src, **node_attrs)
@@ -140,7 +142,7 @@ State {n} - {action_str}
             width, height = img.size
             if n == 0:
                 action_str = "Initial State"
-            html_out += html_div_template.format(staten=html_out_state_n, n=n, action_str=action_str, height=height*0.18)
+            html_out += html_div_template.format(staten=html_out_state_n, n=n, action_str=action_str, height=height*0.22)
             html_out_state_n += 1
         n += 1
     html_out += "</table>"
